@@ -1,10 +1,37 @@
 import React from 'react';
+import { useEffect } from 'react';
 import LoginPage from './components/LoginPage';
 import SignupPage from './components/SignupPage';
 import Dashboard from './components/Dashboard';
+import { supabase, getCurrentUser } from './lib/supabase';
 
 function App() {
   const [currentPage, setCurrentPage] = React.useState<'home' | 'login' | 'signup' | 'dashboard'>('home');
+  const [user, setUser] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+
+  useEffect(() => {
+    // Check if user is already logged in
+    getCurrentUser().then((user) => {
+      setUser(user);
+      if (user) {
+        setCurrentPage('dashboard');
+      }
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        setCurrentPage('dashboard');
+      } else if (event === 'SIGNED_OUT') {
+        setCurrentPage('home');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleLogin = () => {
     setCurrentPage('login');
@@ -24,14 +51,31 @@ function App() {
 
   const handleLogout = () => {
     setCurrentPage('home');
+    setUser(null);
   };
 
+  const handleLoginSuccess = () => {
+    setCurrentPage('dashboard');
+  };
+
+  const handleSignupSuccess = () => {
+    setCurrentPage('login');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-light-blue flex items-center justify-center">
+        <div className="text-white text-xl font-open-sans">Loading...</div>
+      </div>
+    );
+  }
+
   if (currentPage === 'login') {
-    return <LoginPage onBack={handleBackToHome} />;
+    return <LoginPage onBack={handleBackToHome} onLoginSuccess={handleLoginSuccess} />;
   }
 
   if (currentPage === 'signup') {
-    return <SignupPage onBack={handleBackToHome} />;
+    return <SignupPage onBack={handleBackToHome} onSignupSuccess={handleSignupSuccess} />;
   }
 
   if (currentPage === 'dashboard') {

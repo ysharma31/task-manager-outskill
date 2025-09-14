@@ -1,18 +1,46 @@
 import React, { useState } from 'react';
+import { signUp } from '../lib/supabase';
 
 interface SignupPageProps {
   onBack: () => void;
+  onSignupSuccess: () => void;
 }
 
-function SignupPage({ onBack }: SignupPageProps) {
+function SignupPage({ onBack, onSignupSuccess }: SignupPageProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Signup attempt:', { name, email, password });
-    // Add signup logic here
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const { data, error } = await signUp(email, password, name);
+      
+      if (error) {
+        setError(error.message);
+      } else if (data.user) {
+        setSuccess('Account created successfully! You can now login.');
+        // Clear form
+        setName('');
+        setEmail('');
+        setPassword('');
+        // Redirect to login after a short delay
+        setTimeout(() => {
+          onSignupSuccess();
+        }, 2000);
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -38,6 +66,20 @@ function SignupPage({ onBack }: SignupPageProps) {
 
           {/* Signup Form */}
           <form onSubmit={handleSignup} className="space-y-6">
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
+            {/* Success Message */}
+            {success && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+                {success}
+              </div>
+            )}
+
             {/* Name Field */}
             <div>
               <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
@@ -51,6 +93,7 @@ function SignupPage({ onBack }: SignupPageProps) {
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-light-blue-500 focus:outline-none transition-colors duration-200 text-gray-700 placeholder-gray-400"
                 placeholder="Enter your full name"
                 required
+                disabled={loading}
               />
             </div>
 
@@ -67,6 +110,7 @@ function SignupPage({ onBack }: SignupPageProps) {
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-light-blue-500 focus:outline-none transition-colors duration-200 text-gray-700 placeholder-gray-400"
                 placeholder="Enter your email"
                 required
+                disabled={loading}
               />
             </div>
 
@@ -83,15 +127,17 @@ function SignupPage({ onBack }: SignupPageProps) {
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-light-blue-500 focus:outline-none transition-colors duration-200 text-gray-700 placeholder-gray-400"
                 placeholder="Create a password"
                 required
+                disabled={loading}
               />
             </div>
 
             {/* Signup Button */}
             <button
               type="submit"
-              className="w-full bg-light-blue-600 text-white font-semibold py-4 px-6 rounded-lg text-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 hover:bg-light-blue-700 mt-8"
+              disabled={loading}
+              className="w-full bg-light-blue-600 text-white font-semibold py-4 px-6 rounded-lg text-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 hover:bg-light-blue-700 mt-8 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              Create Account
+              {loading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
 

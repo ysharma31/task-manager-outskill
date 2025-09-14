@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { signOut } from '../lib/supabase';
 
 interface DashboardProps {
   onLogout: () => void;
@@ -11,6 +12,11 @@ function Dashboard({ onLogout }: DashboardProps) {
     'Buy groceries'
   ]);
   const [newTask, setNewTask] = useState('');
+
+  const handleLogout = async () => {
+    await signOut();
+    onLogout();
+  };
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +79,7 @@ function Dashboard({ onLogout }: DashboardProps) {
         {/* Logout Button */}
         <div className="text-center">
           <button
-            onClick={onLogout}
+            onClick={handleLogout}
             className="bg-white text-light-blue-600 font-semibold py-4 px-8 rounded-lg text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 hover:bg-light-blue-50 border-2 border-transparent hover:border-light-blue-200"
           >
             Logout

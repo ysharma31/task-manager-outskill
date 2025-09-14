@@ -1,17 +1,35 @@
 import React, { useState } from 'react';
+import { signIn } from '../lib/supabase';
 
 interface LoginPageProps {
   onBack: () => void;
+  onLoginSuccess: () => void;
 }
 
-function LoginPage({ onBack }: LoginPageProps) {
+function LoginPage({ onBack, onLoginSuccess }: LoginPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login attempt:', { email, password });
-    // Add login logic here
+    setLoading(true);
+    setError('');
+
+    try {
+      const { data, error } = await signIn(email, password);
+      
+      if (error) {
+        setError(error.message);
+      } else if (data.user) {
+        onLoginSuccess();
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -37,6 +55,13 @@ function LoginPage({ onBack }: LoginPageProps) {
 
           {/* Login Form */}
           <form onSubmit={handleLogin} className="space-y-6">
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
             {/* Email Field */}
             <div>
               <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
@@ -66,15 +91,17 @@ function LoginPage({ onBack }: LoginPageProps) {
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-light-blue-500 focus:outline-none transition-colors duration-200 text-gray-700 placeholder-gray-400"
                 placeholder="Enter your password"
                 required
+                disabled={loading}
               />
             </div>
 
             {/* Login Button */}
             <button
               type="submit"
-              className="w-full bg-light-blue-600 text-white font-semibold py-4 px-6 rounded-lg text-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 hover:bg-light-blue-700 mt-8"
+              disabled={loading}
+              className="w-full bg-light-blue-600 text-white font-semibold py-4 px-6 rounded-lg text-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 hover:bg-light-blue-700 mt-8 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              Login
+              {loading ? 'Logging in...' : 'Login'}
             </button>
           </form>
 
