@@ -1,79 +1,247 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { signOut } from '../lib/supabase';
+import { getTasks, createTask, updateTask, deleteTask, Task } from '../lib/tasks';
+import { CheckCircle, Clock, Play, Trash2, Plus } from 'lucide-react';
 
 interface DashboardProps {
   onLogout: () => void;
 }
 
 function Dashboard({ onLogout }: DashboardProps) {
-  const [tasks, setTasks] = useState([
-    'Finish homework',
-    'Call John',
-    'Buy groceries'
-  ]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState('');
+  const [newPriority, setNewPriority] = useState<'low' | 'medium' | 'high'>('medium');
+  const [loading, setLoading] = useState(true);
+  const [addingTask, setAddingTask] = useState(false);
+
+  useEffect(() => {
+    loadTasks();
+  }, []);
+
+  const loadTasks = async () => {
+    setLoading(true);
+    const { data, error } = await getTasks();
+    if (error) {
+      console.error('Error loading tasks:', error);
+    } else {
+      setTasks(data || []);
+    }
+    setLoading(false);
+  };
 
   const handleLogout = async () => {
     await signOut();
     onLogout();
   };
 
-  const handleAddTask = (e: React.FormEvent) => {
+  const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newTask.trim()) {
-      setTasks([...tasks, newTask.trim()]);
+    if (!newTask.trim()) return;
+
+    setAddingTask(true);
+    const { data, error } = await createTask({
+      title: newTask.trim(),
+      priority: newPriority,
+      status: 'pending'
+    });
+
+    if (error) {
+      console.error('Error creating task:', error);
+    } else if (data) {
+      setTasks([data, ...tasks]);
       setNewTask('');
+      setNewPriority('medium');
+    }
+    setAddingTask(false);
+  };
+
+  const handleStatusChange = async (taskId: string, newStatus: 'pending' | 'in_progress' | 'done') => {
+    const { data, error } = await updateTask(taskId, { status: newStatus });
+    if (error) {
+      console.error('Error updating task:', error);
+    } else if (data) {
+      setTasks(tasks.map(task => task.id === taskId ? data : task));
     }
   };
 
+  const handleDeleteTask = async (taskId: string) => {
+    const { error } = await deleteTask(taskId);
+    if (error) {
+      console.error('Error deleting task:', error);
+    } else {
+      setTasks(tasks.filter(task => task.id !== taskId));
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'text-red-600 bg-red-50 border-red-200';
+      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'low': return 'text-green-600 bg-green-50 border-green-200';
+      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'done': return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case 'in_progress': return <Play className="w-5 h-5 text-blue-600" />;
+      case 'pending': return <Clock className="w-5 h-5 text-gray-600" />;
+      default: return <Clock className="w-5 h-5 text-gray-600" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'done': return 'text-green-700 bg-green-50 border-green-200';
+      case 'in_progress': return 'text-blue-700 bg-blue-50 border-blue-200';
+      case 'pending': return 'text-gray-700 bg-gray-50 border-gray-200';
+      default: return 'text-gray-700 bg-gray-50 border-gray-200';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-light-blue flex items-center justify-center font-open-sans">
+        <div className="text-white text-xl">Loading your tasks...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-light-blue p-4 font-open-sans">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         {/* Main Heading */}
         <h1 className="text-5xl md:text-6xl font-bold text-white mb-12 text-center drop-shadow-lg">
           Your Tasks
         </h1>
 
-        {/* Tasks Container */}
+        {/* Add New Task Form */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/20 mb-8">
-          {/* Task List */}
-          <div className="mb-8">
-            <ul className="space-y-4">
-              {tasks.map((task, index) => (
-                <li key={index} className="flex items-center text-lg text-gray-700">
-                  <span className="font-semibold text-light-blue-600 mr-3 min-w-[2rem]">
-                    {index + 1}.
-                  </span>
-                  <span>{task}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Add New Task Form */}
+          <h2 className="text-2xl font-bold text-light-blue-700 mb-6">Add New Task</h2>
           <form onSubmit={handleAddTask} className="space-y-6">
-            <div>
-              <label htmlFor="newTask" className="block text-sm font-semibold text-gray-700 mb-2">
-                New Task
-              </label>
-              <div className="flex gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2">
+                <label htmlFor="newTask" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Task Title
+                </label>
                 <input
                   type="text"
                   id="newTask"
                   value={newTask}
                   onChange={(e) => setNewTask(e.target.value)}
-                  className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-light-blue-500 focus:outline-none transition-colors duration-200 text-gray-700 placeholder-gray-400"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-light-blue-500 focus:outline-none transition-colors duration-200 text-gray-700 placeholder-gray-400"
                   placeholder="Enter a new task"
+                  disabled={addingTask}
                 />
-                <button
-                  type="submit"
-                  className="bg-light-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 hover:bg-light-blue-700 whitespace-nowrap"
+              </div>
+              <div>
+                <label htmlFor="priority" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Priority
+                </label>
+                <select
+                  id="priority"
+                  value={newPriority}
+                  onChange={(e) => setNewPriority(e.target.value as 'low' | 'medium' | 'high')}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-light-blue-500 focus:outline-none transition-colors duration-200 text-gray-700"
+                  disabled={addingTask}
                 >
-                  Add Task
-                </button>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
               </div>
             </div>
+            <button
+              type="submit"
+              disabled={addingTask || !newTask.trim()}
+              className="w-full md:w-auto bg-light-blue-600 text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 hover:bg-light-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              {addingTask ? 'Adding Task...' : 'Add Task'}
+            </button>
           </form>
+        </div>
+
+        {/* Tasks List */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/20 mb-8">
+          <h2 className="text-2xl font-bold text-light-blue-700 mb-6">Your Tasks ({tasks.length})</h2>
+          
+          {tasks.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              <Clock className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+              <p className="text-lg">No tasks yet. Add your first task above!</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {tasks.map((task, index) => (
+                <div key={task.id} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center mb-3">
+                        <span className="font-semibold text-light-blue-600 mr-3 text-lg">
+                          {index + 1}.
+                        </span>
+                        <h3 className="text-lg font-medium text-gray-800 flex-1">{task.title}</h3>
+                        <button
+                          onClick={() => handleDeleteTask(task.id)}
+                          className="text-red-500 hover:text-red-700 transition-colors duration-200 ml-4"
+                          title="Delete task"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-3 mb-4">
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getPriorityColor(task.priority)}`}>
+                          {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
+                        </span>
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium border flex items-center ${getStatusColor(task.status)}`}>
+                          {getStatusIcon(task.status)}
+                          <span className="ml-2">
+                            {task.status === 'in_progress' ? 'In Progress' : task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                          </span>
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => handleStatusChange(task.id, 'pending')}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                            task.status === 'pending' 
+                              ? 'bg-gray-600 text-white' 
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          Pending
+                        </button>
+                        <button
+                          onClick={() => handleStatusChange(task.id, 'in_progress')}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                            task.status === 'in_progress' 
+                              ? 'bg-blue-600 text-white' 
+                              : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                          }`}
+                        >
+                          In Progress
+                        </button>
+                        <button
+                          onClick={() => handleStatusChange(task.id, 'done')}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                            task.status === 'done' 
+                              ? 'bg-green-600 text-white' 
+                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          }`}
+                        >
+                          Done
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Logout Button */}
