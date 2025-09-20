@@ -5,9 +5,10 @@ import { CheckCircle, Clock, Play, Trash2, Plus } from 'lucide-react';
 
 interface DashboardProps {
   onLogout: () => void;
+  onProfile: () => void;
 }
 
-function Dashboard({ onLogout }: DashboardProps) {
+function Dashboard({ onLogout, onProfile }: DashboardProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState('');
   const [newPriority, setNewPriority] = useState<'low' | 'medium' | 'high'>('medium');
@@ -246,6 +247,12 @@ function Dashboard({ onLogout }: DashboardProps) {
 
         {/* Logout Button */}
         <div className="text-center">
+          <button
+            onClick={onProfile}
+            className="bg-light-blue-600 text-white font-semibold py-4 px-8 rounded-lg text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 hover:bg-light-blue-700 mr-4"
+          >
+            Profile
+          </button>
           <button
             onClick={handleLogout}
             className="bg-white text-light-blue-600 font-semibold py-4 px-8 rounded-lg text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 hover:bg-light-blue-50 border-2 border-transparent hover:border-light-blue-200"
