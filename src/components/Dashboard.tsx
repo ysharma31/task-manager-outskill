@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { signOut } from '../lib/supabase';
 import { getTasks, createTask, updateTask, deleteTask, Task } from '../lib/tasks';
 import { getSubtasks, createSubtask, generateSubtasks, Subtask } from '../lib/subtasks';
-import { CheckCircle, Clock, Play, Trash2, Plus, Sparkles, Save, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle, Clock, Play, Trash2, Plus, Sparkles, Save, ChevronDown, ChevronUp, Search } from 'lucide-react';
+import { smartSearch, SearchResult } from '../lib/search';
 
 interface DashboardProps {
   onLogout: () => void;
@@ -16,6 +17,9 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
   const [generatedSuggestions, setGeneratedSuggestions] = useState<{ [taskId: string]: string[] }>({});
   const [generatingSubtasks, setGeneratingSubtasks] = useState<{ [taskId: string]: boolean }>({});
   const [savingSubtasks, setSavingSubtasks] = useState<{ [suggestionId: string]: boolean }>({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
   const [newTask, setNewTask] = useState('');
   const [newPriority, setNewPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [loading, setLoading] = useState(true);
@@ -122,6 +126,24 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
     setGeneratingSubtasks(prev => ({ ...prev, [taskId]: false }));
   };
 
+  const handleSmartSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setSearching(true);
+    const { data, error } = await smartSearch(searchQuery.trim());
+    
+    if (error) {
+      console.error('Error performing smart search:', error);
+      alert('Search failed. Please try again.');
+      setSearchResults([]);
+    } else {
+      setSearchResults(data || []);
+    }
+    
+    setSearching(false);
+  };
+
   const handleSaveSubtask = async (taskId: string, subtaskTitle: string, suggestionIndex: number) => {
     const suggestionId = `${taskId}-${suggestionIndex}`;
     setSavingSubtasks(prev => ({ ...prev, [suggestionId]: true }));
@@ -201,6 +223,77 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
           Your Tasks
         </h1>
 
+        {/* Smart Search */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/20 mb-8">
+          <h2 className="text-2xl font-bold text-light-blue-700 mb-6">Smart Search</h2>
+          <form onSubmit={handleSmartSearch} className="space-y-4">
+            <div className="flex gap-4">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-light-blue-500 focus:outline-none transition-colors duration-200 text-gray-700 placeholder-gray-400"
+                placeholder="Search your tasks using natural language..."
+                disabled={searching}
+              />
+              <button
+                type="submit"
+                disabled={searching || !searchQuery.trim()}
+                className="bg-light-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 hover:bg-light-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center"
+              >
+                <Search className="w-5 h-5 mr-2" />
+                {searching ? 'Searching...' : 'Search'}
+              </button>
+            </div>
+          </form>
+
+          {/* Search Results */}
+          {searchResults.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4">
+                Search Results ({searchResults.length})
+              </h3>
+              <div className="space-y-3">
+                {searchResults.map((result, index) => (
+                  <div key={result.id} className="bg-light-blue-50 border border-light-blue-200 rounded-lg p-4 hover:bg-light-blue-100 transition-colors duration-200">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center mb-2">
+                          <span className="font-semibold text-light-blue-600 mr-3">
+                            {index + 1}.
+                          </span>
+                          <h4 className="text-gray-800 font-medium flex-1">{result.title}</h4>
+                          <span className="text-sm text-gray-500 ml-4">
+                            {Math.round(result.similarity * 100)}% match
+                          </span>
+                        </div>
+                        <div className="flex gap-2 ml-6">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(result.priority)}`}>
+                            {result.priority.charAt(0).toUpperCase() + result.priority.slice(1)}
+                          </span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium border flex items-center ${getStatusColor(result.status)}`}>
+                            {getStatusIcon(result.status)}
+                            <span className="ml-1">
+                              {result.status === 'in_progress' ? 'In Progress' : result.status.charAt(0).toUpperCase() + result.status.slice(1)}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* No Results Message */}
+          {searchQuery && !searching && searchResults.length === 0 && (
+            <div className="mt-6 text-center py-8 text-gray-500">
+              <Search className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <p>No similar tasks found. Try a different search term.</p>
+            </div>
+          )}
+        </div>
         {/* Add New Task Form */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/20 mb-8">
           <h2 className="text-2xl font-bold text-light-blue-700 mb-6">Add New Task</h2>
