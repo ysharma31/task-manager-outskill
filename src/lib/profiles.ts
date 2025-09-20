@@ -8,8 +8,13 @@ export interface Profile {
 }
 
 // Get current user's profile
-export const getProfile = async (): Promise<{ data: Profile | null; error: any }> => {
-  const { data: { user } } = await supabase.auth.getUser();
+export const getProfile = async (currentUser?: any): Promise<{ data: Profile | null; error: any }> => {
+  let user = currentUser;
+  
+  if (!user) {
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    user = authUser;
+  }
   
   if (!user) {
     return { data: null, error: { message: 'User not authenticated' } };
@@ -25,8 +30,13 @@ export const getProfile = async (): Promise<{ data: Profile | null; error: any }
 };
 
 // Update user profile
-export const updateProfile = async (updates: Partial<Profile>): Promise<{ data: Profile | null; error: any }> => {
-  const { data: { user } } = await supabase.auth.getUser();
+export const updateProfile = async (updates: Partial<Profile>, currentUser?: any): Promise<{ data: Profile | null; error: any }> => {
+  let user = currentUser;
+  
+  if (!user) {
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    user = authUser;
+  }
   
   if (!user) {
     return { data: null, error: { message: 'User not authenticated' } };
@@ -46,8 +56,13 @@ export const updateProfile = async (updates: Partial<Profile>): Promise<{ data: 
 };
 
 // Upload profile picture
-export const uploadProfilePicture = async (file: File): Promise<{ data: { path: string; url: string } | null; error: any }> => {
-  const { data: { user } } = await supabase.auth.getUser();
+export const uploadProfilePicture = async (file: File, currentUser?: any): Promise<{ data: { path: string; url: string } | null; error: any }> => {
+  let user = currentUser;
+  
+  if (!user) {
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    user = authUser;
+  }
   
   if (!user) {
     return { data: null, error: { message: 'User not authenticated' } };
@@ -76,7 +91,7 @@ export const uploadProfilePicture = async (file: File): Promise<{ data: { path: 
   // Update profile with new avatar URL
   const { error: updateError } = await updateProfile({
     avatar_url: publicUrl
-  });
+  }, user);
 
   if (updateError) {
     return { data: null, error: updateError };
@@ -92,8 +107,13 @@ export const uploadProfilePicture = async (file: File): Promise<{ data: { path: 
 };
 
 // Delete profile picture
-export const deleteProfilePicture = async (): Promise<{ error: any }> => {
-  const { data: { user } } = await supabase.auth.getUser();
+export const deleteProfilePicture = async (currentUser?: any): Promise<{ error: any }> => {
+  let user = currentUser;
+  
+  if (!user) {
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    user = authUser;
+  }
   
   if (!user) {
     return { error: { message: 'User not authenticated' } };
@@ -107,7 +127,7 @@ export const deleteProfilePicture = async (): Promise<{ error: any }> => {
   // Update profile to remove avatar URL
   const { error: updateError } = await updateProfile({
     avatar_url: null
-  });
+  }, user);
 
   return { error: deleteError || updateError };
 };

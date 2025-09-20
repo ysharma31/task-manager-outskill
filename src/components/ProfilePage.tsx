@@ -28,7 +28,7 @@ function ProfilePage({ onBack }: ProfilePageProps) {
 
     if (currentUser) {
       // Get profile data
-      const { data, error } = await getProfile();
+      const { data, error } = await getProfile(currentUser);
       if (error) {
         console.error('Error loading profile:', error);
       } else {
@@ -58,7 +58,7 @@ function ProfilePage({ onBack }: ProfilePageProps) {
 
     setUploading(true);
     
-    const { data, error } = await uploadProfilePicture(file);
+    const { data, error } = await uploadProfilePicture(file, user);
     
     if (error) {
       console.error('Error uploading file:', error);
@@ -81,7 +81,7 @@ function ProfilePage({ onBack }: ProfilePageProps) {
     
     const { data, error } = await updateProfile({
       full_name: fullName.trim()
-    });
+    }, user);
     
     if (error) {
       console.error('Error updating profile:', error);
@@ -100,7 +100,7 @@ function ProfilePage({ onBack }: ProfilePageProps) {
 
     setUploading(true);
     
-    const { error } = await deleteProfilePicture();
+    const { error } = await deleteProfilePicture(user);
     
     if (error) {
       console.error('Error deleting picture:', error);
