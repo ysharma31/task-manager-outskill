@@ -24,12 +24,12 @@ serve(async (req) => {
       )
     }
 
-    const openAIKey = Deno.env.get('OPENAI_API_KEY')
+    const openAIKey = Deno.env.get('OPEN_API_KEY')
     if (!openAIKey) {
-      console.error('OPENAI_API_KEY environment variable not found')
+      console.error('OPEN_API_KEY environment variable not found')
       console.log('Available environment variables:', Object.keys(Deno.env.toObject()))
       return new Response(
-        JSON.stringify({ error: 'OpenAI API key not configured. Please add OPENAI_API_KEY to edge function secrets.' }),
+        JSON.stringify({ error: 'OpenAI API key not configured. Please add OPEN_API_KEY to edge function secrets.' }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
