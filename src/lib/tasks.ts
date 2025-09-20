@@ -40,12 +40,41 @@ export const createTask = async (taskData: CreateTaskData): Promise<{ data: Task
     throw new Error('Please log in to create tasks');
   }
 
+  // Generate embedding for the new task
+  let embedding = null;
+  try {
+    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-task-embeddings`;
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (session) {
+      const openAIResponse = await fetch('https://api.openai.com/v1/embeddings', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'text-embedding-3-large',
+          input: taskData.title
+        }),
+      });
+      
+      if (openAIResponse.ok) {
+        const openAIData = await openAIResponse.json();
+        embedding = openAIData.data[0].embedding;
+      }
+    }
+  } catch (error) {
+    console.log('Failed to generate embedding for new task, will create without embedding');
+  }
+
   const { data, error } = await supabase
     .from('tasks')
     .insert([
       {
         ...taskData,
         user_id: user.id,
+        embedding,
         updated_at: new Date().toISOString()
       }
     ])

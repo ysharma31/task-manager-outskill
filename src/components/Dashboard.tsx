@@ -20,6 +20,7 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
+  const [generatingEmbeddings, setGeneratingEmbeddings] = useState(false);
   const [newTask, setNewTask] = useState('');
   const [newPriority, setNewPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [loading, setLoading] = useState(true);
@@ -144,6 +145,46 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
     setSearching(false);
   };
 
+  const handleGenerateEmbeddings = async () => {
+    setGeneratingEmbeddings(true);
+    
+    try {
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-task-embeddings`;
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        alert('Please log in to generate embeddings');
+        return;
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      };
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error generating embeddings:', errorData);
+        alert('Failed to generate embeddings. Please try again.');
+        return;
+      }
+
+      const result = await response.json();
+      alert(`Successfully generated embeddings for ${result.updated} tasks!`);
+      
+    } catch (error) {
+      console.error('Error generating embeddings:', error);
+      alert('Failed to generate embeddings. Please try again.');
+    } finally {
+      setGeneratingEmbeddings(false);
+    }
+  };
+
   const handleSaveSubtask = async (taskId: string, subtaskTitle: string, suggestionIndex: number) => {
     const suggestionId = `${taskId}-${suggestionIndex}`;
     setSavingSubtasks(prev => ({ ...prev, [suggestionId]: true }));
@@ -226,6 +267,22 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
         {/* Smart Search */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/20 mb-8">
           <h2 className="text-2xl font-bold text-light-blue-700 mb-6">Smart Search</h2>
+          
+          {/* Generate Embeddings Button */}
+          <div className="mb-6">
+            <button
+              onClick={handleGenerateEmbeddings}
+              disabled={generatingEmbeddings}
+              className="bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center text-sm"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              {generatingEmbeddings ? 'Generating Embeddings...' : 'Generate Embeddings for Existing Tasks'}
+            </button>
+            <p className="text-sm text-gray-600 mt-2">
+              Click this button once to enable search for your existing tasks
+            </p>
+          </div>
+
           <form onSubmit={handleSmartSearch} className="space-y-4">
             <div className="flex gap-4">
               <input
