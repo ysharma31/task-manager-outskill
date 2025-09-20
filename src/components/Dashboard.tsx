@@ -106,7 +106,11 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
     
     if (error) {
       console.error('Error generating subtasks:', error);
-      alert('Failed to generate subtasks. Please try again.');
+      if (error.error && error.error.includes('OpenAI API key')) {
+        alert('AI service is not configured. Please contact the administrator to set up the OpenAI API key.');
+      } else {
+        alert('Failed to generate subtasks. Please try again.');
+      }
     } else if (data) {
       setGeneratedSuggestions(prev => ({
         ...prev,
