@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { signOut } from '../lib/supabase';
 import { getTasks, createTask, updateTask, deleteTask, Task } from '../lib/tasks';
-import { CheckCircle, Clock, Play, Trash2, Plus } from 'lucide-react';
+import { getSubtasks, createSubtask, generateSubtasks, Subtask } from '../lib/subtasks';
+import { CheckCircle, Clock, Play, Trash2, Plus, Sparkles, Save, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface DashboardProps {
   onLogout: () => void;
@@ -10,6 +11,11 @@ interface DashboardProps {
 
 function Dashboard({ onLogout, onProfile }: DashboardProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [subtasks, setSubtasks] = useState<{ [taskId: string]: Subtask[] }>({});
+  const [expandedTasks, setExpandedTasks] = useState<{ [taskId: string]: boolean }>({});
+  const [generatedSuggestions, setGeneratedSuggestions] = useState<{ [taskId: string]: string[] }>({});
+  const [generatingSubtasks, setGeneratingSubtasks] = useState<{ [taskId: string]: boolean }>({});
+  const [savingSubtasks, setSavingSubtasks] = useState<{ [suggestionId: string]: boolean }>({});
   const [newTask, setNewTask] = useState('');
   const [newPriority, setNewPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [loading, setLoading] = useState(true);
@@ -18,6 +24,13 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
   useEffect(() => {
     loadTasks();
   }, []);
+
+  useEffect(() => {
+    // Load subtasks for all tasks
+    tasks.forEach(task => {
+      loadSubtasks(task.id);
+    });
+  }, [tasks]);
 
   const loadTasks = async () => {
     setLoading(true);
@@ -28,6 +41,18 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
       setTasks(data || []);
     }
     setLoading(false);
+  };
+
+  const loadSubtasks = async (taskId: string) => {
+    const { data, error } = await getSubtasks(taskId);
+    if (error) {
+      console.error('Error loading subtasks:', error);
+    } else {
+      setSubtasks(prev => ({
+        ...prev,
+        [taskId]: data || []
+      }));
+    }
   };
 
   const handleLogout = async () => {
@@ -72,6 +97,61 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
     } else {
       setTasks(tasks.filter(task => task.id !== taskId));
     }
+  };
+
+  const handleGenerateSubtasks = async (taskId: string, taskTitle: string) => {
+    setGeneratingSubtasks(prev => ({ ...prev, [taskId]: true }));
+    
+    const { data, error } = await generateSubtasks(taskTitle);
+    
+    if (error) {
+      console.error('Error generating subtasks:', error);
+      alert('Failed to generate subtasks. Please try again.');
+    } else if (data) {
+      setGeneratedSuggestions(prev => ({
+        ...prev,
+        [taskId]: data
+      }));
+      setExpandedTasks(prev => ({ ...prev, [taskId]: true }));
+    }
+    
+    setGeneratingSubtasks(prev => ({ ...prev, [taskId]: false }));
+  };
+
+  const handleSaveSubtask = async (taskId: string, subtaskTitle: string, suggestionIndex: number) => {
+    const suggestionId = `${taskId}-${suggestionIndex}`;
+    setSavingSubtasks(prev => ({ ...prev, [suggestionId]: true }));
+    
+    const { data, error } = await createSubtask({
+      title: subtaskTitle,
+      parent_task_id: taskId
+    });
+    
+    if (error) {
+      console.error('Error saving subtask:', error);
+      alert('Failed to save subtask. Please try again.');
+    } else if (data) {
+      // Update subtasks list
+      setSubtasks(prev => ({
+        ...prev,
+        [taskId]: [...(prev[taskId] || []), data]
+      }));
+      
+      // Remove the suggestion from the list
+      setGeneratedSuggestions(prev => ({
+        ...prev,
+        [taskId]: prev[taskId]?.filter((_, index) => index !== suggestionIndex) || []
+      }));
+    }
+    
+    setSavingSubtasks(prev => ({ ...prev, [suggestionId]: false }));
+  };
+
+  const toggleTaskExpansion = (taskId: string) => {
+    setExpandedTasks(prev => ({
+      ...prev,
+      [taskId]: !prev[taskId]
+    }));
   };
 
   const getPriorityColor = (priority: string) => {
@@ -237,6 +317,75 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
                           Done
                         </button>
                       </div>
+                    </div>
+
+                    {/* Generate Subtasks Button */}
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <div className="flex items-center justify-between mb-3">
+                        <button
+                          onClick={() => handleGenerateSubtasks(task.id, task.title)}
+                          disabled={generatingSubtasks[task.id]}
+                          className="flex items-center px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                        >
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          {generatingSubtasks[task.id] ? 'Generating...' : 'Generate Subtasks with AI'}
+                        </button>
+                        
+                        {(subtasks[task.id]?.length > 0 || generatedSuggestions[task.id]?.length > 0) && (
+                          <button
+                            onClick={() => toggleTaskExpansion(task.id)}
+                            className="flex items-center text-gray-500 hover:text-gray-700 transition-colors duration-200"
+                          >
+                            {expandedTasks[task.id] ? (
+                              <ChevronUp className="w-5 h-5" />
+                            ) : (
+                              <ChevronDown className="w-5 h-5" />
+                            )}
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Expanded Content */}
+                      {expandedTasks[task.id] && (
+                        <div className="space-y-3">
+                          {/* Existing Subtasks */}
+                          {subtasks[task.id]?.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700 mb-2">Subtasks:</h4>
+                              <div className="space-y-2">
+                                {subtasks[task.id].map((subtask) => (
+                                  <div key={subtask.id} className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg p-2">
+                                    <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                                    {subtask.title}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* AI Suggestions */}
+                          {generatedSuggestions[task.id]?.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700 mb-2">AI Suggestions:</h4>
+                              <div className="space-y-2">
+                                {generatedSuggestions[task.id].map((suggestion, suggestionIndex) => (
+                                  <div key={suggestionIndex} className="flex items-center justify-between bg-blue-50 rounded-lg p-2">
+                                    <span className="text-sm text-gray-700 flex-1">{suggestion}</span>
+                                    <button
+                                      onClick={() => handleSaveSubtask(task.id, suggestion, suggestionIndex)}
+                                      disabled={savingSubtasks[`${task.id}-${suggestionIndex}`]}
+                                      className="ml-3 flex items-center px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                      <Save className="w-3 h-3 mr-1" />
+                                      {savingSubtasks[`${task.id}-${suggestionIndex}`] ? 'Saving...' : 'Save'}
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
