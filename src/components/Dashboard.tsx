@@ -317,6 +317,55 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
                           Done
                         </button>
                       </div>
+
+                      {/* Generate Subtasks with AI Section */}
+                      <div className="mt-6 pt-4 border-t border-gray-100">
+                        <button
+                          onClick={() => handleGenerateSubtasks(task.id, task.title)}
+                          disabled={generatingSubtasks[task.id]}
+                          className="flex items-center px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium mb-4"
+                        >
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          {generatingSubtasks[task.id] ? 'Generating...' : 'Generate Subtasks with AI'}
+                        </button>
+
+                        {/* Display existing subtasks */}
+                        {subtasks[task.id]?.length > 0 && (
+                          <div className="mb-4">
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Subtasks:</h4>
+                            <div className="space-y-2">
+                              {subtasks[task.id].map((subtask) => (
+                                <div key={subtask.id} className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
+                                  <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+                                  <span>{subtask.title}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Display AI suggestions */}
+                        {generatedSuggestions[task.id]?.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">AI Suggestions:</h4>
+                            <div className="space-y-2">
+                              {generatedSuggestions[task.id].map((suggestion, suggestionIndex) => (
+                                <div key={suggestionIndex} className="flex items-center justify-between bg-blue-50 rounded-lg p-3 border border-blue-100">
+                                  <span className="text-sm text-gray-700 flex-1 mr-3">{suggestion}</span>
+                                  <button
+                                    onClick={() => handleSaveSubtask(task.id, suggestion, suggestionIndex)}
+                                    disabled={savingSubtasks[`${task.id}-${suggestionIndex}`]}
+                                    className="flex items-center px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                                  >
+                                    <Save className="w-3 h-3 mr-1" />
+                                    {savingSubtasks[`${task.id}-${suggestionIndex}`] ? 'Saving...' : 'Save'}
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Generate Subtasks Button */}
