@@ -21,7 +21,11 @@ function LoginPage({ onBack, onLoginSuccess }: LoginPageProps) {
       const { data, error } = await signIn(email, password);
       
       if (error) {
-        setError(error.message);
+        if (error.message.includes('Invalid login credentials')) {
+          setError('Invalid email or password. Please check your credentials and try again.');
+        } else {
+          setError(error.message);
+        }
       } else if (data.user) {
         onLoginSuccess();
       }

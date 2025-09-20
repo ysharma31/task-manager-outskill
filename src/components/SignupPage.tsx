@@ -24,7 +24,13 @@ function SignupPage({ onBack, onSignupSuccess }: SignupPageProps) {
       const { data, error } = await signUp(email, password, name);
       
       if (error) {
-        setError(error.message);
+        if (error.message.includes('User already registered')) {
+          setError('An account with this email already exists. Please try logging in instead.');
+        } else if (error.message.includes('Database error saving new user')) {
+          setError('There was an issue creating your account. Please try again or contact support if the problem persists.');
+        } else {
+          setError(error.message);
+        }
       } else if (data.user) {
         setSuccess('Account created successfully! You can now login.');
         // Clear form
