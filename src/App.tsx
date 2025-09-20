@@ -118,9 +118,14 @@ function App() {
           
           <button
             onClick={handleDashboard}
-            className="w-full sm:w-64 bg-transparent text-white font-semibold py-4 px-8 rounded-lg text-lg border-2 border-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 hover:bg-white hover:text-light-blue-600"
+            className={`w-full sm:w-64 font-semibold py-4 px-8 rounded-lg text-lg border-2 shadow-lg transition-all duration-300 ${
+              user 
+                ? 'bg-transparent text-white border-white hover:shadow-xl transform hover:scale-105 hover:bg-white hover:text-light-blue-600' 
+                : 'bg-gray-400 text-gray-600 border-gray-400 cursor-not-allowed opacity-50'
+            }`}
+            disabled={!user}
           >
-            Go to Dashboard
+            {user ? 'Go to Dashboard' : 'Login Required for Dashboard'}
           </button>
         </div>
 

@@ -37,7 +37,7 @@ export const createTask = async (taskData: CreateTaskData): Promise<{ data: Task
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
-    return { data: null, error: { message: 'User not authenticated' } };
+    throw new Error('Please log in to create tasks');
   }
 
   const { data, error } = await supabase

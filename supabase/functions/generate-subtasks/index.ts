@@ -24,10 +24,22 @@ serve(async (req) => {
       )
     }
 
+    const openAIKey = Deno.env.get('OPENAI_API_KEY')
+    if (!openAIKey) {
+      console.error('OpenAI API key not found in environment variables')
+      return new Response(
+        JSON.stringify({ error: 'AI service temporarily unavailable. Please contact administrator.' }),
+        { 
+          status: 503, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Authorization': `Bearer ${openAIKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -60,7 +72,15 @@ Now generate subtasks for this task:
     })
 
     if (!openAIResponse.ok) {
-      throw new Error(`OpenAI API error: ${openAIResponse.status}`)
+      const errorText = await openAIResponse.text()
+      console.error(`OpenAI API error: ${openAIResponse.status} - ${errorText}`)
+      return new Response(
+        JSON.stringify({ error: 'AI service is currently unavailable. Please try again later.' }),
+        { 
+          status: 502, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
     }
 
     const openAIData = await openAIResponse.json()
@@ -76,7 +96,14 @@ Now generate subtasks for this task:
       if (jsonMatch) {
         subtasks = JSON.parse(jsonMatch[0])
       } else {
-        throw new Error('Failed to parse subtasks from AI response')
+        console.error('Failed to parse AI response:', subtasksText)
+        return new Response(
+          JSON.stringify({ error: 'AI generated an invalid response. Please try again.' }),
+          { 
+            status: 502, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
       }
     }
 
@@ -88,9 +115,9 @@ Now generate subtasks for this task:
     )
 
   } catch (error) {
-    console.error('Error generating subtasks:', error)
+    console.error('Error generating subtasks:', error.message || error)
     return new Response(
-      JSON.stringify({ error: 'Failed to generate subtasks' }),
+      JSON.stringify({ error: 'An unexpected error occurred. Please try again later.' }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
