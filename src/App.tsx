@@ -12,12 +12,32 @@ function App() {
   const [loading, setLoading] = React.useState(true);
 
   useEffect(() => {
+    const envCheck = {
+      supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
+      hasAnonKey: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
+      keyPrefix: import.meta.env.VITE_SUPABASE_ANON_KEY?.substring(0, 20),
+      mode: import.meta.env.MODE,
+      dev: import.meta.env.DEV,
+      allEnvKeys: Object.keys(import.meta.env)
+    };
+    console.log('App mounted. Env check:', envCheck);
+
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      console.error('CRITICAL: Supabase environment variables are not loaded!');
+      console.error('Available env keys:', Object.keys(import.meta.env));
+      setLoading(false);
+      return;
+    }
+
     // Check if user is already logged in
     getCurrentUser().then((user) => {
       setUser(user);
       if (user) {
         setCurrentPage('dashboard');
       }
+      setLoading(false);
+    }).catch(err => {
+      console.error('Error getting current user:', err);
       setLoading(false);
     });
 
@@ -67,6 +87,29 @@ function App() {
     return (
       <div className="min-h-screen bg-gradient-light-blue flex items-center justify-center">
         <div className="text-white text-xl font-open-sans">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center p-4">
+        <div className="max-w-2xl bg-white rounded-2xl shadow-2xl p-8">
+          <h1 className="text-3xl font-bold text-red-600 mb-4">Configuration Error</h1>
+          <p className="text-gray-700 mb-4">
+            Supabase environment variables are not loaded. Please refresh the page.
+          </p>
+          <div className="bg-gray-100 p-4 rounded-lg text-sm font-mono text-gray-600">
+            <p>Expected: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY</p>
+            <p>Loaded: {Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')).join(', ') || 'None'}</p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-6 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Refresh Page
+          </button>
+        </div>
       </div>
     );
   }

@@ -22,14 +22,17 @@ function SignupPage({ onBack, onSignupSuccess }: SignupPageProps) {
 
     try {
       const { data, error } = await signUp(email, password, name);
-      
+
       if (error) {
+        console.error('Signup error:', error);
         if (error.message.includes('User already registered')) {
           setError('An account with this email already exists. Please try logging in instead.');
         } else if (error.message.includes('Database error saving new user')) {
           setError('There was an issue creating your account. Please try again or contact support if the problem persists.');
+        } else if (error.message.includes('Failed to fetch')) {
+          setError('Unable to connect to the authentication service. Please check your internet connection and try again.');
         } else {
-          setError(error.message);
+          setError(error.message || 'An error occurred during signup');
         }
       } else if (data.user) {
         setSuccess('Account created successfully! You can now login.');
@@ -42,8 +45,13 @@ function SignupPage({ onBack, onSignupSuccess }: SignupPageProps) {
           onSignupSuccess();
         }, 2000);
       }
-    } catch (err) {
-      setError('An unexpected error occurred');
+    } catch (err: any) {
+      console.error('Signup exception:', err);
+      if (err?.message?.includes('Failed to fetch')) {
+        setError('Unable to connect to the authentication service. Please check your internet connection and try again.');
+      } else {
+        setError(err?.message || 'An unexpected error occurred');
+      }
     } finally {
       setLoading(false);
     }
