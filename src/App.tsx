@@ -162,18 +162,6 @@ function App() {
           >
             Get Started
           </button>
-
-          <button
-            onClick={handleDashboard}
-            className={`w-full sm:w-64 font-semibold py-4 px-8 rounded-xl text-lg border-2 shadow-lg transition-all duration-300 ${
-              user
-                ? 'bg-teal-600 text-white border-teal-600 hover:shadow-xl transform hover:scale-105 hover:bg-teal-700'
-                : 'bg-gray-300 text-gray-500 border-gray-300 cursor-not-allowed opacity-50'
-            }`}
-            disabled={!user}
-          >
-            {user ? 'Go to Dashboard' : 'Dashboard'}
-          </button>
         </div>
 
         {/* Additional spacing */}
