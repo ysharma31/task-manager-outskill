@@ -114,19 +114,23 @@ function ProfilePage({ onBack }: ProfilePageProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-light-blue flex items-center justify-center font-open-sans">
-        <div className="text-white text-xl">Loading profile...</div>
+      <div className="min-h-screen bg-cream-300 flex items-center justify-center">
+        <div className="text-teal-900 text-xl font-display">Loading profile...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-light-blue p-4 font-open-sans">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-cream-300 p-4 relative overflow-hidden">
+      {/* Decorative background shapes */}
+      <div className="absolute top-20 left-0 w-96 h-96 bg-amber-400 rounded-full opacity-20 blur-3xl"></div>
+      <div className="absolute bottom-20 right-0 w-96 h-96 bg-teal-400 rounded-full opacity-20 blur-3xl"></div>
+
+      <div className="max-w-2xl mx-auto relative z-10">
         {/* Back Button */}
         <button
           onClick={onBack}
-          className="mb-8 text-white/80 hover:text-white transition-colors duration-200 flex items-center text-sm font-medium"
+          className="mb-8 text-teal-700 hover:text-teal-900 transition-colors duration-200 flex items-center text-sm font-medium"
         >
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -135,12 +139,12 @@ function ProfilePage({ onBack }: ProfilePageProps) {
         </button>
 
         {/* Main Heading */}
-        <h1 className="text-5xl md:text-6xl font-bold text-white mb-12 text-center drop-shadow-lg">
+        <h1 className="text-5xl md:text-6xl font-display font-bold text-teal-900 mb-12 text-center">
           Profile
         </h1>
 
         {/* Profile Card */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/20">
+        <div className="bg-white rounded-2xl shadow-2xl p-8">
           
           {/* Profile Picture Section */}
           <div className="text-center mb-8">
@@ -151,11 +155,11 @@ function ProfilePage({ onBack }: ProfilePageProps) {
                   <img
                     src={profile.avatar_url}
                     alt="Profile"
-                    className="w-full h-full rounded-full object-cover border-4 border-light-blue-200 shadow-lg"
+                    className="w-full h-full rounded-full object-cover border-4 border-teal-200 shadow-lg"
                   />
                 ) : (
-                  <div className="w-full h-full rounded-full bg-light-blue-100 border-4 border-light-blue-200 shadow-lg flex items-center justify-center">
-                    <User className="w-16 h-16 text-light-blue-400" />
+                  <div className="w-full h-full rounded-full bg-teal-100 border-4 border-teal-200 shadow-lg flex items-center justify-center">
+                    <User className="w-16 h-16 text-teal-400" />
                   </div>
                 )}
                 
@@ -184,7 +188,7 @@ function ProfilePage({ onBack }: ProfilePageProps) {
                 />
                 <label
                   htmlFor="profile-upload"
-                  className={`inline-flex items-center px-6 py-3 bg-light-blue-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 hover:bg-light-blue-700 cursor-pointer ${
+                  className={`inline-flex items-center px-6 py-3 bg-amber-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 hover:bg-amber-600 cursor-pointer ${
                     uploading ? 'opacity-50 cursor-not-allowed transform-none' : ''
                   }`}
                 >
@@ -211,7 +215,7 @@ function ProfilePage({ onBack }: ProfilePageProps) {
           {/* Profile Information Form */}
           <form onSubmit={handleUpdateProfile} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-sm font-semibold text-teal-900 mb-2">
                 Email
               </label>
               <input
@@ -219,13 +223,13 @@ function ProfilePage({ onBack }: ProfilePageProps) {
                 id="email"
                 value={user?.email || ''}
                 disabled
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 text-gray-500 cursor-not-allowed"
               />
-              <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+              <p className="text-xs text-teal-700 mt-1">Email cannot be changed</p>
             </div>
 
             <div>
-              <label htmlFor="fullName" className="block text-sm font-semibold text-gray-700 mb-2">
+              <label htmlFor="fullName" className="block text-sm font-semibold text-teal-900 mb-2">
                 Full Name
               </label>
               <input
@@ -233,7 +237,7 @@ function ProfilePage({ onBack }: ProfilePageProps) {
                 id="fullName"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-light-blue-500 focus:outline-none transition-colors duration-200 text-gray-700 placeholder-gray-400"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:outline-none transition-colors duration-200 text-teal-900 placeholder-gray-400"
                 placeholder="Enter your full name"
                 disabled={updating}
               />
@@ -242,7 +246,7 @@ function ProfilePage({ onBack }: ProfilePageProps) {
             <button
               type="submit"
               disabled={updating || !fullName.trim() || fullName === profile?.full_name}
-              className="w-full bg-light-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 hover:bg-light-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full bg-amber-500 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               {updating ? 'Updating Profile...' : 'Update Profile'}
             </button>
@@ -251,15 +255,15 @@ function ProfilePage({ onBack }: ProfilePageProps) {
           {/* Profile Stats */}
           <div className="mt-8 pt-6 border-t border-gray-200">
             <div className="grid grid-cols-2 gap-4 text-center">
-              <div className="bg-light-blue-50 rounded-lg p-4">
-                <p className="text-sm text-gray-600">Member Since</p>
-                <p className="font-semibold text-light-blue-700">
+              <div className="bg-teal-50 rounded-xl p-4">
+                <p className="text-sm text-teal-700">Member Since</p>
+                <p className="font-semibold text-teal-900">
                   {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
                 </p>
               </div>
-              <div className="bg-light-blue-50 rounded-lg p-4">
-                <p className="text-sm text-gray-600">Last Updated</p>
-                <p className="font-semibold text-light-blue-700">
+              <div className="bg-amber-50 rounded-xl p-4">
+                <p className="text-sm text-amber-700">Last Updated</p>
+                <p className="font-semibold text-amber-900">
                   {profile?.updated_at ? new Date(profile.updated_at).toLocaleDateString() : 'N/A'}
                 </p>
               </div>

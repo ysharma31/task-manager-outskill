@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { signOut } from '../lib/supabase';
+import { signOut, supabase } from '../lib/supabase';
 import { getTasks, createTask, updateTask, deleteTask, Task } from '../lib/tasks';
 import { getSubtasks, createSubtask, generateSubtasks, Subtask } from '../lib/subtasks';
 import { CheckCircle, Clock, Play, Trash2, Plus, Sparkles, Save, ChevronDown, ChevronUp, Search } from 'lucide-react';
@@ -250,35 +250,39 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-light-blue flex items-center justify-center font-open-sans">
-        <div className="text-white text-xl">Loading your tasks...</div>
+      <div className="min-h-screen bg-cream-300 flex items-center justify-center">
+        <div className="text-teal-900 text-xl font-display">Loading your tasks...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-light-blue p-4 font-open-sans">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-cream-300 p-4 relative overflow-hidden">
+      {/* Decorative background shapes */}
+      <div className="absolute top-20 right-0 w-96 h-96 bg-teal-400 rounded-full opacity-20 blur-3xl"></div>
+      <div className="absolute bottom-20 left-0 w-96 h-96 bg-amber-400 rounded-full opacity-20 blur-3xl"></div>
+
+      <div className="max-w-4xl mx-auto relative z-10">
         {/* Main Heading */}
-        <h1 className="text-5xl md:text-6xl font-bold text-white mb-12 text-center drop-shadow-lg">
+        <h1 className="text-5xl md:text-6xl font-display font-bold text-teal-900 mb-12 text-center">
           Your Tasks
         </h1>
 
         {/* Smart Search */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/20 mb-8">
-          <h2 className="text-2xl font-bold text-light-blue-700 mb-6">Smart Search</h2>
-          
+        <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
+          <h2 className="text-2xl font-display font-bold text-teal-800 mb-6">Smart Search</h2>
+
           {/* Generate Embeddings Button */}
           <div className="mb-6">
             <button
               onClick={handleGenerateEmbeddings}
               disabled={generatingEmbeddings}
-              className="bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center text-sm"
+              className="bg-teal-600 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center text-sm"
             >
               <Sparkles className="w-4 h-4 mr-2" />
               {generatingEmbeddings ? 'Generating Embeddings...' : 'Generate Embeddings for Existing Tasks'}
             </button>
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="text-sm text-teal-700 mt-2">
               Click this button once to enable search for your existing tasks
             </p>
           </div>
@@ -289,14 +293,14 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-light-blue-500 focus:outline-none transition-colors duration-200 text-gray-700 placeholder-gray-400"
+                className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:outline-none transition-colors duration-200 text-teal-900 placeholder-gray-400"
                 placeholder="Search your tasks using natural language..."
                 disabled={searching}
               />
               <button
                 type="submit"
                 disabled={searching || !searchQuery.trim()}
-                className="bg-light-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 hover:bg-light-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center"
+                className="bg-amber-500 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center"
               >
                 <Search className="w-5 h-5 mr-2" />
                 {searching ? 'Searching...' : 'Search'}
@@ -307,20 +311,20 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
           {/* Search Results */}
           {searchResults.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-lg font-semibold text-gray-700 mb-4">
+              <h3 className="text-lg font-semibold text-teal-800 mb-4">
                 Search Results ({searchResults.length})
               </h3>
               <div className="space-y-3">
                 {searchResults.map((result, index) => (
-                  <div key={result.id} className="bg-light-blue-50 border border-light-blue-200 rounded-lg p-4 hover:bg-light-blue-100 transition-colors duration-200">
+                  <div key={result.id} className="bg-teal-50 border border-teal-200 rounded-xl p-4 hover:bg-teal-100 transition-colors duration-200">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center mb-2">
-                          <span className="font-semibold text-light-blue-600 mr-3">
+                          <span className="font-semibold text-teal-700 mr-3">
                             {index + 1}.
                           </span>
-                          <h4 className="text-gray-800 font-medium flex-1">{result.title}</h4>
-                          <span className="text-sm text-gray-500 ml-4">
+                          <h4 className="text-teal-900 font-medium flex-1">{result.title}</h4>
+                          <span className="text-sm text-teal-600 ml-4">
                             {Math.round(result.similarity * 100)}% match
                           </span>
                         </div>
@@ -352,12 +356,12 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
           )}
         </div>
         {/* Add New Task Form */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/20 mb-8">
-          <h2 className="text-2xl font-bold text-light-blue-700 mb-6">Add New Task</h2>
+        <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
+          <h2 className="text-2xl font-display font-bold text-teal-800 mb-6">Add New Task</h2>
           <form onSubmit={handleAddTask} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-2">
-                <label htmlFor="newTask" className="block text-sm font-semibold text-gray-700 mb-2">
+                <label htmlFor="newTask" className="block text-sm font-semibold text-teal-900 mb-2">
                   Task Title
                 </label>
                 <input
@@ -365,20 +369,20 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
                   id="newTask"
                   value={newTask}
                   onChange={(e) => setNewTask(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-light-blue-500 focus:outline-none transition-colors duration-200 text-gray-700 placeholder-gray-400"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:outline-none transition-colors duration-200 text-teal-900 placeholder-gray-400"
                   placeholder="Enter a new task"
                   disabled={addingTask}
                 />
               </div>
               <div>
-                <label htmlFor="priority" className="block text-sm font-semibold text-gray-700 mb-2">
+                <label htmlFor="priority" className="block text-sm font-semibold text-teal-900 mb-2">
                   Priority
                 </label>
                 <select
                   id="priority"
                   value={newPriority}
                   onChange={(e) => setNewPriority(e.target.value as 'low' | 'medium' | 'high')}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-light-blue-500 focus:outline-none transition-colors duration-200 text-gray-700"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:outline-none transition-colors duration-200 text-teal-900"
                   disabled={addingTask}
                 >
                   <option value="low">Low</option>
@@ -390,7 +394,7 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
             <button
               type="submit"
               disabled={addingTask || !newTask.trim()}
-              className="w-full md:w-auto bg-light-blue-600 text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 hover:bg-light-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center"
+              className="w-full md:w-auto bg-amber-500 text-white font-semibold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center"
             >
               <Plus className="w-5 h-5 mr-2" />
               {addingTask ? 'Adding Task...' : 'Add Task'}
@@ -399,8 +403,8 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
         </div>
 
         {/* Tasks List */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/20 mb-8">
-          <h2 className="text-2xl font-bold text-light-blue-700 mb-6">Your Tasks ({tasks.length})</h2>
+        <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
+          <h2 className="text-2xl font-display font-bold text-teal-800 mb-6">Your Tasks ({tasks.length})</h2>
           
           {tasks.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
@@ -414,10 +418,10 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center mb-3">
-                        <span className="font-semibold text-light-blue-600 mr-3 text-lg">
+                        <span className="font-semibold text-teal-700 mr-3 text-lg">
                           {index + 1}.
                         </span>
-                        <h3 className="text-lg font-medium text-gray-800 flex-1">{task.title}</h3>
+                        <h3 className="text-lg font-medium text-teal-900 flex-1">{task.title}</h3>
                         <button
                           onClick={() => handleDeleteTask(task.id)}
                           className="text-red-500 hover:text-red-700 transition-colors duration-200 ml-4"
@@ -477,7 +481,7 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
                         <button
                           onClick={() => handleGenerateSubtasks(task.id, task.title)}
                           disabled={generatingSubtasks[task.id]}
-                          className="flex items-center px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium mb-4"
+                          className="flex items-center px-4 py-2 bg-teal-100 text-teal-700 rounded-xl hover:bg-teal-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium mb-4"
                         >
                           <Sparkles className="w-4 h-4 mr-2" />
                           {generatingSubtasks[task.id] ? 'Generating...' : 'Generate Subtasks with AI'}
@@ -504,12 +508,12 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
                             <h4 className="text-sm font-medium text-gray-700 mb-2">AI Suggestions:</h4>
                             <div className="space-y-2">
                               {generatedSuggestions[task.id].map((suggestion, suggestionIndex) => (
-                                <div key={suggestionIndex} className="flex items-center justify-between bg-blue-50 rounded-lg p-3 border border-blue-100">
-                                  <span className="text-sm text-gray-700 flex-1 mr-3">{suggestion}</span>
+                                <div key={suggestionIndex} className="flex items-center justify-between bg-amber-50 rounded-xl p-3 border border-amber-200">
+                                  <span className="text-sm text-teal-900 flex-1 mr-3">{suggestion}</span>
                                   <button
                                     onClick={() => handleSaveSubtask(task.id, suggestion, suggestionIndex)}
                                     disabled={savingSubtasks[`${task.id}-${suggestionIndex}`]}
-                                    className="flex items-center px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                                    className="flex items-center px-3 py-1 bg-amber-500 text-white text-xs rounded-lg hover:bg-amber-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                                   >
                                     <Save className="w-3 h-3 mr-1" />
                                     {savingSubtasks[`${task.id}-${suggestionIndex}`] ? 'Saving...' : 'Save'}
@@ -532,13 +536,13 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
         <div className="text-center">
           <button
             onClick={onProfile}
-            className="bg-light-blue-600 text-white font-semibold py-4 px-8 rounded-lg text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 hover:bg-light-blue-700 mr-4"
+            className="bg-teal-600 text-white font-semibold py-4 px-8 rounded-xl text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 hover:bg-teal-700 mr-4"
           >
             Profile
           </button>
           <button
             onClick={handleLogout}
-            className="bg-white text-light-blue-600 font-semibold py-4 px-8 rounded-lg text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 hover:bg-light-blue-50 border-2 border-transparent hover:border-light-blue-200"
+            className="bg-white text-teal-700 font-semibold py-4 px-8 rounded-xl text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 hover:bg-teal-50 border-2 border-teal-200 hover:border-teal-300"
           >
             Logout
           </button>
