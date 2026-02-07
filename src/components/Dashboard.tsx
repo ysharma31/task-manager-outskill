@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { signOut, supabase } from '../lib/supabase';
-import { getTasks, createTask, updateTask, deleteTask, Task } from '../lib/tasks';
+import { getTasks, createTask, updateTask, deleteTask, Task, TaskCategory } from '../lib/tasks';
 import { getSubtasks, createSubtask, generateSubtasks, Subtask } from '../lib/subtasks';
 import { CheckCircle, Clock, Play, Trash2, Plus, Sparkles, Save, ChevronDown, ChevronUp, Search } from 'lucide-react';
 import { smartSearch, SearchResult } from '../lib/search';
@@ -22,6 +22,7 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
   const [searching, setSearching] = useState(false);
   const [generatingEmbeddings, setGeneratingEmbeddings] = useState(false);
   const [newTask, setNewTask] = useState('');
+  const [newCategory, setNewCategory] = useState<TaskCategory>('personal');
   const [newPriority, setNewPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [loading, setLoading] = useState(true);
   const [addingTask, setAddingTask] = useState(false);
@@ -72,6 +73,7 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
     setAddingTask(true);
     const { data, error } = await createTask({
       title: newTask.trim(),
+      category: newCategory,
       priority: newPriority,
       status: 'pending'
     });
@@ -81,6 +83,7 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
     } else if (data) {
       setTasks([data, ...tasks]);
       setNewTask('');
+      setNewCategory('personal');
       setNewPriority('medium');
     }
     setAddingTask(false);
@@ -248,6 +251,23 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
     }
   };
 
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'medical': return 'text-red-700 bg-red-50 border-red-200';
+      case 'groceries': return 'text-emerald-700 bg-emerald-50 border-emerald-200';
+      case 'household': return 'text-blue-700 bg-blue-50 border-blue-200';
+      case 'children': return 'text-pink-700 bg-pink-50 border-pink-200';
+      case 'work': return 'text-purple-700 bg-purple-50 border-purple-200';
+      case 'personal': return 'text-amber-700 bg-amber-50 border-amber-200';
+      case 'other': return 'text-gray-700 bg-gray-50 border-gray-200';
+      default: return 'text-gray-700 bg-gray-50 border-gray-200';
+    }
+  };
+
+  const getCategoryLabel = (category: string) => {
+    return category.charAt(0).toUpperCase() + category.slice(1);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-cream-300 flex items-center justify-center">
@@ -329,6 +349,9 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
                           </span>
                         </div>
                         <div className="flex gap-2 ml-6">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getCategoryColor(result.category)}`}>
+                            {getCategoryLabel(result.category)}
+                          </span>
                           <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(result.priority)}`}>
                             {result.priority.charAt(0).toUpperCase() + result.priority.slice(1)}
                           </span>
@@ -359,7 +382,7 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
         <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
           <h2 className="text-2xl font-display font-bold text-teal-800 mb-6">Add New Task</h2>
           <form onSubmit={handleAddTask} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="md:col-span-2">
                 <label htmlFor="newTask" className="block text-sm font-semibold text-teal-900 mb-2">
                   Task Title
@@ -373,6 +396,26 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
                   placeholder="Enter a new task"
                   disabled={addingTask}
                 />
+              </div>
+              <div>
+                <label htmlFor="category" className="block text-sm font-semibold text-teal-900 mb-2">
+                  Category
+                </label>
+                <select
+                  id="category"
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value as TaskCategory)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:outline-none transition-colors duration-200 text-teal-900"
+                  disabled={addingTask}
+                >
+                  <option value="personal">Personal</option>
+                  <option value="work">Work</option>
+                  <option value="medical">Medical</option>
+                  <option value="groceries">Groceries</option>
+                  <option value="household">Household</option>
+                  <option value="children">Children</option>
+                  <option value="other">Other</option>
+                </select>
               </div>
               <div>
                 <label htmlFor="priority" className="block text-sm font-semibold text-teal-900 mb-2">
@@ -432,6 +475,9 @@ function Dashboard({ onLogout, onProfile }: DashboardProps) {
                       </div>
                       
                       <div className="flex flex-wrap gap-3 mb-4">
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getCategoryColor(task.category)}`}>
+                          {getCategoryLabel(task.category)}
+                        </span>
                         <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getPriorityColor(task.priority)}`}>
                           {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
                         </span>

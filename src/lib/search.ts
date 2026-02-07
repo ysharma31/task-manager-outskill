@@ -3,6 +3,7 @@ import { supabase } from './supabase';
 export interface SearchResult {
   id: string;
   title: string;
+  category: string;
   priority: 'low' | 'medium' | 'high';
   status: 'pending' | 'in_progress' | 'done';
   similarity: number;

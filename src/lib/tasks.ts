@@ -1,8 +1,11 @@
 import { supabase } from './supabase';
 
+export type TaskCategory = 'medical' | 'groceries' | 'household' | 'children' | 'work' | 'personal' | 'other';
+
 export interface Task {
   id: string;
   title: string;
+  category: TaskCategory;
   priority: 'low' | 'medium' | 'high';
   status: 'pending' | 'in_progress' | 'done';
   user_id: string;
@@ -12,12 +15,14 @@ export interface Task {
 
 export interface CreateTaskData {
   title: string;
+  category: TaskCategory;
   priority: 'low' | 'medium' | 'high';
   status: 'pending' | 'in_progress' | 'done';
 }
 
 export interface UpdateTaskData {
   title?: string;
+  category?: TaskCategory;
   priority?: 'low' | 'medium' | 'high';
   status?: 'pending' | 'in_progress' | 'done';
 }
